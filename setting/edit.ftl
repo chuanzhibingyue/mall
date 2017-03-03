@@ -1,1022 +1,310 @@
 [#escape x as x?html]
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" >
 <head>
-<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<title>${message("admin.setting.edit")} - Powered By JSHOP</title>
-<meta name="author" content="JSHOP Team" />
-<meta name="copyright" content="JSHOP" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title></title>
+<script type="text/javascript" src="${base}/resources/resource/js/jquery.js"></script>
+<script type="text/javascript" src="${base}/resources/resource/js/jquery.validation.min.js"></script>
+<script type="text/javascript" src="${base}/resources/resource/js/admincp.js"></script>
+<script type="text/javascript" src="${base}/resources/resource/js/jquery.cookie.js"></script>
+<script type="text/javascript" src="${base}/resources/resource/js/common.js" charset="utf-8"></script>
+<link href="${base}/resources/admin/css/skin_0.css" rel="stylesheet" type="text/css" id="cssfile2" />
+<link href="${base}/resources/resource/js/perfect-scrollbar.min.css" rel="stylesheet" type="text/css">
 <link href="${base}/resources/admin/css/common.css" rel="stylesheet" type="text/css" />
-<script type="text/javascript" src="${base}/resources/admin/js/jquery.js"></script>
-<script type="text/javascript" src="${base}/resources/admin/js/jquery.tools.js"></script>
-<script type="text/javascript" src="${base}/resources/admin/js/jquery.validate.js"></script>
-<script type="text/javascript" src="${base}/resources/admin/js/webuploader.js"></script>
-<script type="text/javascript" src="${base}/resources/admin/js/common.js"></script>
-<script type="text/javascript" src="${base}/resources/admin/js/input.js"></script>
+<link href="${base}/resources/admin/css/font/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+<!--[if IE 7]>
+  <link rel="stylesheet" href="${base}/resources/admin/css/font/font-awesome/css/font-awesome-ie7.min.css">
+<![endif]-->
+<script type="text/javascript" src="${base}/resources/resource/js/perfect-scrollbar.min.js"></script>
+
 <script type="text/javascript">
-$().ready(function() {
-
-	var $inputForm = $("#inputForm");
-	var $filePicker = $("a.filePicker");
-	var $smtpHost = $("#smtpHost");
-	var $smtpPort = $("#smtpPort");
-	var $smtpUsername = $("#smtpUsername");
-	var $smtpPassword = $("#smtpPassword");
-	var $smtpSSLEnabled = $("#smtpSSLEnabled");
-	var $smtpFromMail = $("#smtpFromMail");
-	var $testSmtp = $("#testSmtp");
-	var $toMail = $("#toMail");
-	var $sendMail = $("#sendMail");
-	var $testSmtpStatus = $("#testSmtpStatus");
-	var $smsBalance = $("#smsBalance");
-	
-	[@flash_message /]
-	
-	$filePicker.uploader();
-	
-	// 邮件测试
-	$testSmtp.click(function() {
-		$testSmtp.closest("tr").hide();
-		$toMail.closest("tr").show();
-	});
-	
-	// 发送邮件
-	$sendMail.click(function() {
-		$toMail.removeClass("ignore");
-		var validator = $inputForm.validate();
-		var isValid = validator.element($smtpFromMail) & validator.element($smtpHost) & validator.element($smtpPort) & validator.element($smtpUsername) & validator.element($toMail);
-		$toMail.addClass("ignore");
-		$.ajax({
-			url: "test_smtp.jhtml",
-			type: "POST",
-			data: {smtpHost: $smtpHost.val(), smtpPort: $smtpPort.val(), smtpUsername: $smtpUsername.val(), smtpPassword: $smtpPassword.val(), smtpSSLEnabled: $smtpSSLEnabled.prop("checked"), smtpFromMail: $smtpFromMail.val(), toMail: $toMail.val()},
-			dataType: "json",
-			cache: false,
-			beforeSend: function() {
-				if (!isValid) {
-					return false;
-				}
-				$testSmtpStatus.html('<span class="loadingIcon">&nbsp;<\/span>${message("admin.setting.sendMailLoading")}');
-				$sendMail.prop("disabled", true);
-			},
-			success: function(message) {
-				$testSmtpStatus.empty();
-				$sendMail.prop("disabled", false);
-				$.message(message);
-			}
-		});
-	});
-	
-	// 短信余额查询
-	$smsBalance.click(function() {
-		var $this = $(this);
-		$.ajax({
-			url: "sms_balance.jhtml",
-			type: "GET",
-			dataType: "json",
-			cache: false,
-			beforeSend: function() {
-				$this.prop("disabled", true).after('<span class="loadingIcon">&nbsp;<\/span>');
-			},
-			success: function(message) {
-				$this.prop("disabled", false).nextAll("span").remove();
-				if (message.type == "success") {
-					$.dialog({
-						type: "warn",
-						content: message.content,
-						modal: true,
-						ok: null,
-						cancel: null
-					});
-				} else {
-					$.message(message);
-				}
-			}
-		});
-		return false;
-	});
-	
-	$.validator.addMethod("compareLength", 
-		function(value, element, param) {
-			return this.optional(element) || $.trim(value) == "" || $.trim($(param).val()) == "" || parseFloat(value) >= parseFloat($(param).val());
-		},
-		"${message("admin.setting.compareLength")}"
-	);
-	
-	$.validator.addMethod("requiredTo", 
-		function(value, element, param) {
-			var parameterValue = $(param).val();
-			if ($.trim(parameterValue) == "" || ($.trim(parameterValue) != "" && $.trim(value) != "")) {
-				return true;
-			} else {
-				return false;
-			}
-		},
-		"${message("admin.setting.requiredTo")}"
-	);
-	
-	// 表单验证
-	$inputForm.validate({
-		rules: {
-			siteName: "required",
-			siteUrl: {
-				required: true,
-				pattern: /^(http:\/\/|https:\/\/).*$/i
-			},
-			logo: {
-				required: true,
-				pattern: /^(http:\/\/|https:\/\/|\/).*$/i
-			},
-			email: "email",
-			siteCloseMessage: "required",
-			largeProductImageWidth: {
-				required: true,
-				integer: true,
-				min: 1
-			},
-			largeProductImageHeight: {
-				required: true,
-				integer: true,
-				min: 1
-			},
-			mediumProductImageWidth: {
-				required: true,
-				integer: true,
-				min: 1
-			},
-			mediumProductImageHeight: {
-				required: true,
-				integer: true,
-				min: 1
-			},
-			thumbnailProductImageWidth: {
-				required: true,
-				integer: true,
-				min: 1
-			},
-			thumbnailProductImageHeight: {
-				required: true,
-				integer: true,
-				min: 1
-			},
-			defaultLargeProductImage: {
-				required: true,
-				pattern: /^(http:\/\/|https:\/\/|\/).*$/i
-			},
-			defaultMediumProductImage: {
-				required: true,
-				pattern: /^(http:\/\/|https:\/\/|\/).*$/i
-			},
-			defaultThumbnailProductImage: {
-				required: true,
-				pattern: /^(http:\/\/|https:\/\/|\/).*$/i
-			},
-			watermarkAlpha: {
-				required: true,
-				digits: true,
-				max: 100
-			},
-			watermarkImageFile: {
-				extension: "${setting.uploadImageExtension}"
-			},
-			defaultMarketPriceScale: {
-				required: true,
-				min: 0,
-				decimal: {
-					integer: 3,
-					fraction: 3
-				}
-			},
-			usernameMinLength: {
-				required: true,
-				integer: true,
-				min: 1,
-				max: 117
-			},
-			usernameMaxLength: {
-				required: true,
-				integer: true,
-				min: 1,
-				max: 117,
-				compareLength: "#usernameMinLength"
-			},
-			passwordMinLength: {
-				required: true,
-				integer: true,
-				min: 1,
-				max: 117
-			},
-			passwordMaxLength: {
-				required: true,
-				integer: true,
-				min: 1,
-				max: 117,
-				compareLength: "#passwordMinLength"
-			},
-			registerPoint: {
-				required: true,
-				integer: true,
-				min: 0
-			},
-			registerAgreement: "required",
-			accountLockCount: {
-				required: true,
-				integer: true,
-				min: 1
-			},
-			accountLockTime: {
-				required: true,
-				digits: true
-			},
-			safeKeyExpiryTime: {
-				required: true,
-				digits: true
-			},
-			uploadMaxSize: {
-				required: true,
-				digits: true
-			},
-			imageUploadPath: "required",
-			mediaUploadPath: "required",
-			fileUploadPath: "required",
-			smtpFromMail: {
-				required: true,
-				email: true
-			},
-			smtpHost: "required",
-			smtpPort: {
-				required: true,
-				digits: true
-			},
-			smtpUsername: "required",
-			toMail: {
-				required: true,
-				email: true
-			},
-			currencySign: "required",
-			currencyUnit: "required",
-			stockAlertCount: {
-				required: true,
-				digits: true
-			},
-			defaultPointScale: {
-				required: true,
-				min: 0,
-				decimal: {
-					integer: 3,
-					fraction: 3
-				}
-			},
-			taxRate: {
-				required: true,
-				min: 0,
-				decimal: {
-					integer: 3,
-					fraction: 3
-				}
-			},
-			cookiePath: "required",
-			smsKey: {
-				requiredTo: "#smsSn"
-			}
-		}
-	});
-
-});
+SITEURL ='${base}';
+RESOURCE_SITE_URL = '${base}/resources/resource/';
+MICROSHOP_SITE_URL ='${base}/micshop';
+CIRCLE_SITE_URL = '${base}/circle';
+ADMIN_TEMPLATES_URL ='${base}/resources/admin/';
+LOADING_IMAGE = "${base}/resources/admin/images/loading.gif";
+//换肤
+cookie_skin = $.cookie("MyCssSkin");
+if (cookie_skin) {
+	$('#cssfile2').attr("href","${base}/resources/admin/css/"+ cookie_skin +".css");
+}
 </script>
 </head>
 <body>
-	<div class="breadcrumb">
-		<a href="${base}/admin/common/index.jhtml">${message("admin.breadcrumb.home")}</a> &raquo; ${message("admin.setting.edit")}
-	</div>
-	<form id="inputForm" action="update.jhtml" method="post" enctype="multipart/form-data">
-		<ul id="tab" class="tab">
-			<li>
-				<input type="button" value="${message("admin.setting.base")}" />
-			</li>
-			<li>
-				<input type="button" value="${message("admin.setting.show")}" />
-			</li>
-			<li>
-				<input type="button" value="${message("admin.setting.registerSecurity")}" />
-			</li>
-			<li>
-				<input type="button" value="${message("admin.setting.mail")}" />
-			</li>
-			<li>
-				<input type="button" value="${message("admin.setting.other")}" />
-			</li>
-		</ul>
-		<table class="input tabContent">
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.siteName")}:
-				</th>
-				<td>
-					<input type="text" name="siteName" class="text" value="${setting.siteName}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.siteUrl")}:
-				</th>
-				<td>
-					<input type="text" name="siteUrl" class="text" value="${setting.siteUrl}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.logo")}:
-				</th>
-				<td>
-					<span class="fieldSet">
-						<input type="text" name="logo" class="text" value="${setting.logo}" maxlength="200" />
-						<a href="javascript:;" class="button filePicker">${message("admin.upload.filePicker")}</a>
-						<a href="${setting.logo}" target="_blank">${message("admin.common.view")}</a>
-					</span>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.hotSearch")}:
-				</th>
-				<td>
-					<input type="text" name="hotSearch" class="text" value="${setting.hotSearch}" maxlength="200" title="${message("admin.setting.hotSearchTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.address")}:
-				</th>
-				<td>
-					<input type="text" name="address" class="text" value="${setting.address}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.phone")}:
-				</th>
-				<td>
-					<input type="text" name="phone" class="text" value="${setting.phone}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.zipCode")}:
-				</th>
-				<td>
-					<input type="text" name="zipCode" class="text" value="${setting.zipCode}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.email")}:
-				</th>
-				<td>
-					<input type="text" name="email" class="text" value="${setting.email}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.certtext")}:
-				</th>
-				<td>
-					<input type="text" name="certtext" class="text" value="${setting.certtext}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isSiteEnabled")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isSiteEnabled" value="true"[#if setting.isSiteEnabled] checked="checked"[/#if] />
-					<input type="hidden" name="_isSiteEnabled" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.siteCloseMessage")}:
-				</th>
-				<td>
-					<textarea name="siteCloseMessage" class="text">${setting.siteCloseMessage}</textarea>
-				</td>
-			</tr>
-		</table>
-		<table class="input tabContent">
-			<tr>
-				<th>
-					${message("Setting.locale")}:
-				</th>
-				<td>
-					<select name="locale">
-						[#list locales as locale]
-							<option value="${locale}"[#if locale == setting.locale] selected="selected"[/#if]>${message("Setting.Locale." + locale)}</option>
-						[/#list]
-					</select>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("admin.setting.largeProductImage")}:
-				</th>
-				<td>
-					${message("admin.setting.width")}:
-					<input type="text" name="largeProductImageWidth" class="text" value="${setting.largeProductImageWidth}" maxlength="9" style="width: 50px;" title="${message("admin.setting.widthTitle")}" />
-					${message("admin.setting.height")}:
-					<input type="text" name="largeProductImageHeight" class="text" value="${setting.largeProductImageHeight}" maxlength="9" style="width: 50px;" title="${message("admin.setting.heightTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("admin.setting.mediumProductImage")}:
-				</th>
-				<td>
-					${message("admin.setting.width")}:
-					<input type="text" name="mediumProductImageWidth" class="text" value="${setting.mediumProductImageWidth}" maxlength="9" style="width: 50px;" title="${message("admin.setting.widthTitle")}" />
-					${message("admin.setting.height")}:
-					<input type="text" name="mediumProductImageHeight" class="text" value="${setting.mediumProductImageHeight}" maxlength="9" style="width: 50px;" title="${message("admin.setting.heightTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("admin.setting.thumbnailProductImage")}:
-				</th>
-				<td>
-					${message("admin.setting.width")}:
-					<input type="text" name="thumbnailProductImageWidth" class="text" value="${setting.thumbnailProductImageWidth}" maxlength="9" style="width: 50px;" title="${message("admin.setting.widthTitle")}" />
-					${message("admin.setting.height")}:
-					<input type="text" name="thumbnailProductImageHeight" class="text" value="${setting.thumbnailProductImageHeight}" maxlength="9" style="width: 50px;" title="${message("admin.setting.heightTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("admin.setting.defaultLargeProductImage")}:
-				</th>
-				<td>
-					<span class="fieldSet">
-						<input type="text" name="defaultLargeProductImage" class="text" value="${setting.defaultLargeProductImage}" maxlength="200" />
-						<a href="javascript:;" class="button filePicker">${message("admin.upload.filePicker")}</a>
-						<a href="${setting.defaultLargeProductImage}" target="_blank">${message("admin.common.view")}</a>
-					</span>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("admin.setting.defaultMediumProductImage")}:
-				</th>
-				<td>
-					<span class="fieldSet">
-						<input type="text" name="defaultMediumProductImage" class="text" value="${setting.defaultMediumProductImage}" maxlength="200" />
-						<a href="javascript:;" class="button filePicker">${message("admin.upload.filePicker")}</a>
-						<a href="${setting.defaultMediumProductImage}" target="_blank">${message("admin.common.view")}</a>
-					</span>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("admin.setting.defaultThumbnailProductImage")}:
-				</th>
-				<td>
-					<span class="fieldSet">
-						<input type="text" name="defaultThumbnailProductImage" class="text" value="${setting.defaultThumbnailProductImage}" maxlength="200" />
-						<a href="javascript:;" class="button filePicker">${message("admin.upload.filePicker")}</a>
-						<a href="${setting.defaultThumbnailProductImage}" target="_blank">${message("admin.common.view")}</a>
-					</span>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.watermarkAlpha")}:
-				</th>
-				<td>
-					<input type="text" name="watermarkAlpha" class="text" value="${setting.watermarkAlpha}" maxlength="9" title="${message("admin.setting.watermarkAlphaTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.watermarkImage")}:
-				</th>
-				<td>
-					<span class="fieldSet">
-						<input type="file" name="watermarkImageFile" />
-						<a href="${base}${setting.watermarkImage}" target="_blank">${message("admin.common.view")}</a>
-					</span>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.watermarkPosition")}:
-				</th>
-				<td>
-					<select name="watermarkPosition">
-						[#list watermarkPositions as watermarkPosition]
-							<option value="${watermarkPosition}"[#if watermarkPosition == setting.watermarkPosition] selected="selected"[/#if]>${message("Setting.WatermarkPosition." + watermarkPosition)}</option>
-						[/#list]
-					</select>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.priceScale")}:
-				</th>
-				<td>
-					<select name="priceScale">
-						<option value="0"[#if setting.priceScale == 0] selected="selected"[/#if]>${message("admin.setting.priceScale0")}</option>
-						<option value="1"[#if setting.priceScale == 1] selected="selected"[/#if]>${message("admin.setting.priceScale1")}</option>
-						<option value="2"[#if setting.priceScale == 2] selected="selected"[/#if]>${message("admin.setting.priceScale2")}</option>
-						<option value="3"[#if setting.priceScale == 3] selected="selected"[/#if]>${message("admin.setting.priceScale3")}</option>
-					</select>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.priceRoundType")}:
-				</th>
-				<td>
-					<select name="priceRoundType">
-						[#list roundTypes as roundType]
-							<option value="${roundType}"[#if roundType == setting.priceRoundType] selected="selected"[/#if]>${message("Setting.RoundType." + roundType)}</option>
-						[/#list]
-					</select>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isShowMarketPrice")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isShowMarketPrice" value="true"[#if setting.isShowMarketPrice] checked="checked"[/#if] />
-					<input type="hidden" name="_isShowMarketPrice" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.defaultMarketPriceScale")}:
-				</th>
-				<td>
-					<input type="text" name="defaultMarketPriceScale" class="text" value="${setting.defaultMarketPriceScale}" maxlength="7" title="${message("admin.setting.defaultMarketPriceScaleTitle")}" />
-				</td>
-			</tr>
-		</table>
-		<table class="input tabContent">
-			<tr>
-				<th>
-					${message("Setting.isRegisterEnabled")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isRegisterEnabled" value="true"[#if setting.isRegisterEnabled] checked="checked"[/#if] />
-					<input type="hidden" name="_isRegisterEnabled" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isDuplicateEmail")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isDuplicateEmail" value="true"[#if setting.isDuplicateEmail] checked="checked"[/#if] />
-					<input type="hidden" name="_isDuplicateEmail" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.disabledUsername")}:
-				</th>
-				<td>
-					<input type="text" name="disabledUsername" class="text" value="${setting.disabledUsername}" maxlength="200" title="${message("admin.setting.disabledUsernameTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.usernameMinLength")}:
-				</th>
-				<td>
-					<input type="text" id="usernameMinLength" name="usernameMinLength" class="text" value="${setting.usernameMinLength}" maxlength="3" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.usernameMaxLength")}:
-				</th>
-				<td>
-					<input type="text" name="usernameMaxLength" class="text" value="${setting.usernameMaxLength}" maxlength="3" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.passwordMinLength")}:
-				</th>
-				<td>
-					<input type="text" id="passwordMinLength" name="passwordMinLength" class="text" value="${setting.passwordMinLength}" maxlength="3" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.passwordMaxLength")}:
-				</th>
-				<td>
-					<input type="text" name="passwordMaxLength" class="text" value="${setting.passwordMaxLength}" maxlength="3" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.registerPoint")}:
-				</th>
-				<td>
-					<input type="text" name="registerPoint" class="text" value="${setting.registerPoint}" maxlength="9" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.registerAgreement")}:
-				</th>
-				<td>
-					<textarea name="registerAgreement" class="text">${setting.registerAgreement}</textarea>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isEmailLogin")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isEmailLogin" value="true"[#if setting.isEmailLogin] checked="checked"[/#if] />
-					<input type="hidden" name="_isEmailLogin" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.captchaTypes")}:
-				</th>
-				<td>
-					[#list captchaTypes as captchaType]
-						<label>
-							<input type="checkbox" name="captchaTypes" value="${captchaType}"[#if setting.captchaTypes?? && setting.captchaTypes?seq_contains(captchaType)] checked="checked"[/#if] />${message("Setting.CaptchaType." + captchaType)}
-						</label>
-					[/#list]
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.accountLockTypes")}:
-				</th>
-				<td>
-					[#list accountLockTypes as accountLockType]
-						<label>
-							<input type="checkbox" name="accountLockTypes" value="${accountLockType}"[#if setting.accountLockTypes?? && setting.accountLockTypes?seq_contains(accountLockType)] checked="checked"[/#if] />${message("Setting.AccountLockType." + accountLockType)}
-						</label>
-					[/#list]
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.accountLockCount")}:
-				</th>
-				<td>
-					<input type="text" name="accountLockCount" class="text" value="${setting.accountLockCount}" maxlength="9" title="${message("admin.setting.accountLockCountTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.accountLockTime")}:
-				</th>
-				<td>
-					<input type="text" name="accountLockTime" class="text" value="${setting.accountLockTime}" maxlength="9" title="${message("admin.setting.accountLockTimeTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.safeKeyExpiryTime")}:
-				</th>
-				<td>
-					<input type="text" name="safeKeyExpiryTime" class="text" value="${setting.safeKeyExpiryTime}" maxlength="9" title="${message("admin.setting.safeKeyExpiryTimeTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.uploadMaxSize")}:
-				</th>
-				<td>
-					<input type="text" name="uploadMaxSize" class="text" value="${setting.uploadMaxSize}" maxlength="9" title="${message("admin.setting.uploadMaxSizeTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.uploadImageExtension")}:
-				</th>
-				<td>
-					<input type="text" name="uploadImageExtension" class="text" value="${setting.uploadImageExtension}" maxlength="200" title="${message("admin.setting.uploadImageExtensionTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.uploadMediaExtension")}:
-				</th>
-				<td>
-					<input type="text" name="uploadMediaExtension" class="text" value="${setting.uploadMediaExtension}" maxlength="200" title="${message("admin.setting.uploadMediaExtensionTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.uploadFileExtension")}:
-				</th>
-				<td>
-					<input type="text" name="uploadFileExtension" class="text" value="${setting.uploadFileExtension}" maxlength="200" title="${message("admin.setting.uploadFileExtensionTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.imageUploadPath")}:
-				</th>
-				<td>
-					<input type="text" name="imageUploadPath" class="text" value="${setting.imageUploadPath}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.mediaUploadPath")}:
-				</th>
-				<td>
-					<input type="text" name="mediaUploadPath" class="text" value="${setting.mediaUploadPath}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.fileUploadPath")}:
-				</th>
-				<td>
-					<input type="text" name="fileUploadPath" class="text" value="${setting.fileUploadPath}" maxlength="200" />
-				</td>
-			</tr>
-		</table>
-		<table class="input tabContent">
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.smtpHost")}:
-				</th>
-				<td>
-					<input type="text" id="smtpHost" name="smtpHost" class="text" value="${setting.smtpHost}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.smtpPort")}:
-				</th>
-				<td>
-					<input type="text" id="smtpPort" name="smtpPort" class="text" value="${setting.smtpPort}" maxlength="9" title="${message("admin.setting.smtpPorteTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.smtpUsername")}:
-				</th>
-				<td>
-					<input type="text" id="smtpUsername" name="smtpUsername" class="text" value="${setting.smtpUsername}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.smtpPassword")}:
-				</th>
-				<td>
-					<input type="password" id="smtpPassword" name="smtpPassword" class="text" maxlength="200" autocomplete="off" title="${message("admin.setting.smtpPasswordTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.smtpSSLEnabled")}:
-				</th>
-				<td>
-					<input type="checkbox" id="smtpSSLEnabled" name="smtpSSLEnabled" value="true"[#if setting.smtpSSLEnabled] checked="checked"[/#if] />
-					<input type="hidden" name="_smtpSSLEnabled" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.smtpFromMail")}:
-				</th>
-				<td>
-					<input type="text" id="smtpFromMail" name="smtpFromMail" class="text" value="${setting.smtpFromMail}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					&nbsp;
-				</th>
-				<td>
-					<a href="javascript:;" id="testSmtp">[${message("admin.setting.testSmtp")}]</a>
-				</td>
-			</tr>
-			<tr class="hidden">
-				<th>
-					${message("admin.setting.toMail")}:
-				</th>
-				<td>
-					<span class="fieldSet">
-						<input type="text" id="toMail" name="toMail" class="text ignore" maxlength="200" />
-						<input type="button" id="sendMail" class="button" value="${message("admin.setting.sendMail")}" />
-						<span id="testSmtpStatus">&nbsp;</span>
-					</span>
-				</td>
-			</tr>
-		</table>
-		<table class="input tabContent">
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.currencySign")}:
-				</th>
-				<td>
-					<input type="text" name="currencySign" class="text" value="${setting.currencySign}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.currencyUnit")}:
-				</th>
-				<td>
-					<input type="text" name="currencyUnit" class="text" value="${setting.currencyUnit}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.stockAlertCount")}:
-				</th>
-				<td>
-					<input type="text" name="stockAlertCount" class="text" value="${setting.stockAlertCount}" maxlength="9" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.stockAllocationTime")}:
-				</th>
-				<td>
-					<select name="stockAllocationTime">
-						[#list stockAllocationTimes as stockAllocationTime]
-							<option value="${stockAllocationTime}"[#if stockAllocationTime == setting.stockAllocationTime] selected="selected"[/#if]>${message("Setting.StockAllocationTime." + stockAllocationTime)}</option>
-						[/#list]
-					</select>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.defaultPointScale")}:
-				</th>
-				<td>
-					<input type="text" name="defaultPointScale" class="text" value="${setting.defaultPointScale}" maxlength="7" title="${message("admin.setting.defaultPointScaleTitle")}" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isDevelopmentEnabled")}:
-				</th>
-				<td>
-					<label title="${message("admin.setting.isDevelopmentEnabledTitle")}">
-						<input type="checkbox" name="isDevelopmentEnabled" value="true"[#if setting.isDevelopmentEnabled] checked="checked"[/#if] />
-						<input type="hidden" name="_isDevelopmentEnabled" value="false" />
-					</label>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isReviewEnabled")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isReviewEnabled" value="true"[#if setting.isReviewEnabled] checked="checked"[/#if] />
-					<input type="hidden" name="_isReviewEnabled" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isReviewCheck")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isReviewCheck" value="true"[#if setting.isReviewCheck] checked="checked"[/#if] />
-					<input type="hidden" name="_isReviewCheck" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.reviewAuthority")}:
-				</th>
-				<td>
-					<select name="reviewAuthority">
-						[#list reviewAuthorities as reviewAuthority]
-							<option value="${reviewAuthority}"[#if reviewAuthority == setting.reviewAuthority] selected="selected"[/#if]>${message("Setting.ReviewAuthority." + reviewAuthority)}</option>
-						[/#list]
-					</select>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isConsultationEnabled")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isConsultationEnabled" value="true"[#if setting.isConsultationEnabled] checked="checked"[/#if] />
-					<input type="hidden" name="_isConsultationEnabled" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isConsultationCheck")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isConsultationCheck" value="true"[#if setting.isConsultationCheck] checked="checked"[/#if] />
-					<input type="hidden" name="_isConsultationCheck" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.consultationAuthority")}:
-				</th>
-				<td>
-					<select name="consultationAuthority">
-						[#list consultationAuthorities as consultationAuthority]
-							<option value="${consultationAuthority}"[#if consultationAuthority == setting.consultationAuthority] selected="selected"[/#if]>${message("Setting.ConsultationAuthority." + consultationAuthority)}</option>
-						[/#list]
-					</select>
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isInvoiceEnabled")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isInvoiceEnabled" value="true"[#if setting.isInvoiceEnabled] checked="checked"[/#if] />
-					<input type="hidden" name="_isInvoiceEnabled" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.isTaxPriceEnabled")}:
-				</th>
-				<td>
-					<input type="checkbox" name="isTaxPriceEnabled" value="true" title="${message("admin.setting.taxRateTitle")}"[#if setting.isTaxPriceEnabled] checked="checked"[/#if] />
-					<input type="hidden" name="_isTaxPriceEnabled" value="false" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.taxRate")}:
-				</th>
-				<td>
-					<input type="text" name="taxRate" class="text" value="${setting.taxRate}" maxlength="7" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					<span class="requiredField">*</span>${message("Setting.cookiePath")}:
-				</th>
-				<td>
-					<input type="text" name="cookiePath" class="text" value="${setting.cookiePath}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.cookieDomain")}:
-				</th>
-				<td>
-					<input type="text" name="cookieDomain" class="text" value="${setting.cookieDomain}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.kuaidi100Key")}:
-				</th>
-				<td>
-					<input type="text" name="kuaidi100Key" class="text" value="${setting.kuaidi100Key}" maxlength="200" />
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.smsSn")}:
-				</th>
-				<td>
-					<input type="text" id="smsSn" name="smsSn" class="text" value="${setting.smsSn}" maxlength="200" />
-					[#if setting.smsSn?has_content && setting.smsKey?has_content]
-						<a href="javascript:;" id="smsBalance">[${message("admin.setting.smsBalance")}]</a>
-					[/#if]
-				</td>
-			</tr>
-			<tr>
-				<th>
-					${message("Setting.smsKey")}:
-				</th>
-				<td>
-					<input type="text" name="smsKey" class="text" value="${setting.smsKey}" maxlength="200" />
-				</td>
-			</tr>
-		</table>
-		<table class="input">
-			<tr>
-				<th>
-					&nbsp;
-				</th>
-				<td>
-					<input type="submit" class="button" value="${message("admin.common.submit")}" />
-					<input type="button" class="button" value="${message("admin.common.back")}" onclick="history.back(); return false;" />
-				</td>
-			</tr>
-		</table>
-	</form>
+<div id="append_parent"></div>
+<div id="ajaxwaitid"></div>
+
+<div class="page">
+
+ <div class="fixed-bar">
+    <div class="item-title">
+      <h3>${message("web_set")}</h3>
+       <ul class="tab-base">
+       
+          <li><a href="" [#if current==0] class="current" [/#if]><span>${message("web_set")}</span></a></li>
+          <li><a href=""  [#if current==1] class="current" [/#if] ><span>${message("dis_dump")}</span></a></li>
+        
+       
+       </ul>
+    </div>
+  </div>
+
+  <div class="fixed-empty"></div>
+  
+  
+  
+  <form method="post" enctype="multipart/form-data" name="form1">
+    <input type="hidden" name="form_submit" value="ok" />
+    <table class="table tb-type2">
+      <tbody>
+        <tr class="noborder">
+          <td colspan="2" class="required"><label for="site_name">${message("web_name")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><input id="site_name" name="site_name" value="<?php echo $output['list_setting']['site_name'];?>" class="txt" type="text" /></td>
+          <td class="vatop tips"><span class="vatop rowform">${message("web_name_notice")}</span></td>
+        </tr>
+     
+         
+
+		
+		
+        <tr>
+          <td colspan="2" class="required"><label for="site_logo">${message("site_logo")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><span class="type-file-show"><img class="show_image" src="${base}/resources/admin/images/preview.png">
+            <div class="type-file-preview"><img src="<?php echo UPLOAD_SITE_URL.'/'.(ATTACH_COMMON.DS.$output['list_setting']['site_logo']);?>"></div>
+            </span><span class="type-file-box"><input type='text' name='textfield' id='textfield1' class='type-file-text' /><input type='button' name='button' id='button1' value='' class='type-file-button' />
+            <input name="site_logo" type="file" class="type-file-file" id="site_logo" size="30" hidefocus="true" nc_type="change_site_logo">
+            </span></td>
+          <td class="vatop tips"><span class="vatop rowform">默认网站LOGO,通用头部显示，最佳显示尺寸为240*60像素</span></td>
+        </tr>
+        
+        <!--//zmr>v30-->
+         <tr>
+          <td colspan="2" class="required"><label for="site_mobile_logo">手机网站LOGO:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><span class="type-file-show"><img class="show_image" src="${base}/resources/admin/images/preview.png">
+            <div class="type-file-preview" style="background-color:red"><img src="<?php echo UPLOAD_SITE_URL.'/'.(ATTACH_COMMON.DS.$output['list_setting']['site_mobile_logo']);?>"></div>
+            </span><span class="type-file-box"><input type='text' name='textfield' id='textfield8' class='type-file-text' /><input type='button' name='button' id='button1' value='' class='type-file-button' />
+            <input name="site_mobile_logo" type="file" class="type-file-file" id="site_mobile_logo" size="30" hidefocus="true" nc_type="change_site_mobile_logo">
+            </span></td>
+          <td class="vatop tips"><span class="vatop rowform">默认手机网站LOGO,通用头部显示，最佳显示尺寸为116*43像素</span></td>
+        </tr>
+        
+        
+        <tr>
+          <td colspan="2" class="required"><label for="site_logo">${message("member_logo")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><span class="type-file-show"><img class="show_image" src="${base}/resources/admin/images/preview.png">
+            <div class="type-file-preview"><img src="<?php echo UPLOAD_SITE_URL.'/'.(ATTACH_COMMON.DS.$output['list_setting']['member_logo']);?>"></div>
+            </span><span class="type-file-box"><input type='text' name='textfield2' id='textfield2' class='type-file-text' /><input type='button' name='button2' id='button2' value='' class='type-file-button' />
+            <input name="member_logo" type="file" class="type-file-file" id="member_logo" size="30" hidefocus="true" nc_type="change_member_logo">
+            </span></td>
+          <td class="vatop tips"><span class="vatop rowform">网站小尺寸LOGO，会员个人主页显示，最佳显示尺寸为200*40像素</span></td>
+        </tr>
+        <!-- 商家中心logo -->
+        <tr>
+          <td colspan="2" class="required"><label for="seller_center_logo">商家中心Logo:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><span class="type-file-show"><img class="show_image" src="${base}/resources/admin/images/preview.png">
+            <div class="type-file-preview"><img src="<?php echo UPLOAD_SITE_URL.'/'.(ATTACH_COMMON.DS.$output['list_setting']['seller_center_logo']);?>"></div>
+            </span><span class="type-file-box"><input type='text' name='textfield' id='textfield3' class='type-file-text' /><input type='button' name='button' id='button1' value='' class='type-file-button' />
+            <input name="seller_center_logo" type="file" class="type-file-file" id="seller_center_logo" size="30" hidefocus="true" nc_type="change_seller_center_logo">
+            </span></td>
+          <td class="vatop tips"><span class="vatop rowform">商家中心LOGO，最佳显示尺寸为150*40像素，请根据背景色选择使用图片色彩</span></td>
+        </tr>
+        <!-- 商家中心logo -->
+	  <!-- 商城底部微信二维码 -->
+        <tr>
+          <td colspan="2" class="required"><label for="site_logowx">${message("site_bank_weixinerwei")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><span class="type-file-show"><img class="show_image" src="${base}/resources/admin/images/preview.png">
+            <div class="type-file-preview"><img src="<?php echo UPLOAD_SITE_URL.'/'.(ATTACH_COMMON.DS.$output['list_setting']['site_logowx']);?>"></div>
+            </span><span class="type-file-box"><input type='text' name='textfield' id='textfield5' class='type-file-text' /><input type='button' name='button' id='button1' value='' class='type-file-button' />
+            <input name="site_logowx" type="file" class="type-file-file" id="site_logowx" size="30" hidefocus="true" nc_type="change_site_logowx">
+            </span></td>
+          <td class="vatop tips"><span class="vatop rowform">放在网站右上角顶部及首页底部右下角,最佳显示尺寸为66*66像素</span></td>
+        </tr>	
+	 <!-- 商城底部微信二维码 -->
+        <tr>
+          <td colspan="2" class="required"><label for="icp_number">${message("icp_number")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><input id="icp_number" name="icp_number" value="<?php echo $output['list_setting']['icp_number'];?>" class="txt" type="text" /></td>
+          <td class="vatop tips"><span class="vatop rowform">${message("icp_number_notice")}</span></td>
+        </tr>
+        <tr>
+          <td colspan="2" class="required"><label for="site_phone">${message("site_phone")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><input id="site_phone" name="site_phone" value="<?php echo $output['list_setting']['site_phone'];?>" class="txt" type="text" /></td>
+          <td class="vatop tips"><span class="vatop rowform">${message("site_phone_notice")}</span></td>
+        </tr>
+	
+	
+	
+	<!-- 400 电话 -->		
+<tr>
+          <td colspan="2" class="required"><label for="site_tel400">${message("site_tel400")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><input id="site_tel400" name="site_tel400" value="<?php echo $output['list_setting']['site_tel400'];?>" class="txt" type="text" /></td>
+          <td class="vatop tips"><span class="vatop rowform">${message("icp_number_notice400")}</span></td>
+        </tr>
+		<!-- 400 电话 -->	
+
+	
+        <!--
+        平台付款账号，前台暂时无调用
+        <tr>
+          <td colspan="2" class="required"><label for="site_bank_account"><?php echo $lang['site_bank_account'];?>:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><input id="site_bank_account" name="site_bank_account" value="<?php echo $output['list_setting']['site_bank_account'];?>" class="txt" type="text" /></td>
+          <td class="vatop tips"><span class="vatop rowform"><?php echo $lang['site_bank_account_notice'];?></span></td>
+        </tr>
+        -->
+        <tr>
+          <td colspan="2" class="required"><label for="site_email">${message("site_email")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><input id="site_email" name="site_email" value="<?php echo $output['list_setting']['site_email'];?>" class="txt" type="text" /></td>
+          <td class="vatop tips"><span class="vatop rowform">${message("site_email_notice")}</span></td>
+        </tr>
+         <tr>
+          <td colspan="2" class="required"><label for="statistics_code">${message("flow_static_code")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><textarea name="statistics_code" rows="6" class="tarea" id="statistics_code"><?php echo $output['list_setting']['statistics_code'];?></textarea></td>
+          <td class="vatop tips"><span class="vatop rowform">${message("flow_static_code_notice")} </span></td>
+        </tr> 
+        <tr>
+          <td colspan="2" class="required"><label for="time_zone"> ${message("time_zone_set")} :</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><select id="time_zone" name="time_zone">
+              <option value="-12">(GMT -12:00) Eniwetok, Kwajalein</option>
+              <option value="-11">(GMT -11:00) Midway Island, Samoa</option>
+              <option value="-10">(GMT -10:00) Hawaii</option>
+              <option value="-9">(GMT -09:00) Alaska</option>
+              <option value="-8">(GMT -08:00) Pacific Time (US &amp; Canada), Tijuana</option>
+              <option value="-7">(GMT -07:00) Mountain Time (US &amp; Canada), Arizona</option>
+              <option value="-6">(GMT -06:00) Central Time (US &amp; Canada), Mexico City</option>
+              <option value="-5">(GMT -05:00) Eastern Time (US &amp; Canada), Bogota, Lima, Quito</option>
+              <option value="-4">(GMT -04:00) Atlantic Time (Canada), Caracas, La Paz</option>
+              <option value="-3.5">(GMT -03:30) Newfoundland</option>
+              <option value="-3">(GMT -03:00) Brassila, Buenos Aires, Georgetown, Falkland Is</option>
+              <option value="-2">(GMT -02:00) Mid-Atlantic, Ascension Is., St. Helena</option>
+              <option value="-1">(GMT -01:00) Azores, Cape Verde Islands</option>
+              <option value="0">(GMT) Casablanca, Dublin, Edinburgh, London, Lisbon, Monrovia</option>
+              <option value="1">(GMT +01:00) Amsterdam, Berlin, Brussels, Madrid, Paris, Rome</option>
+              <option value="2">(GMT +02:00) Cairo, Helsinki, Kaliningrad, South Africa</option>
+              <option value="3">(GMT +03:00) Baghdad, Riyadh, Moscow, Nairobi</option>
+              <option value="3.5">(GMT +03:30) Tehran</option>
+              <option value="4">(GMT +04:00) Abu Dhabi, Baku, Muscat, Tbilisi</option>
+              <option value="4.5">(GMT +04:30) Kabul</option>
+              <option value="5">(GMT +05:00) Ekaterinburg, Islamabad, Karachi, Tashkent</option>
+              <option value="5.5">(GMT +05:30) Bombay, Calcutta, Madras, New Delhi</option>
+              <option value="5.75">(GMT +05:45) Katmandu</option>
+              <option value="6">(GMT +06:00) Almaty, Colombo, Dhaka, Novosibirsk</option>
+              <option value="6.5">(GMT +06:30) Rangoon</option>
+              <option value="7">(GMT +07:00) Bangkok, Hanoi, Jakarta</option>
+              <option value="8">(GMT +08:00) Beijing, Hong Kong, Perth, Singapore, Taipei</option>
+              <option value="9">(GMT +09:00) Osaka, Sapporo, Seoul, Tokyo, Yakutsk</option>
+              <option value="9.5">(GMT +09:30) Adelaide, Darwin</option>
+              <option value="10">(GMT +10:00) Canberra, Guam, Melbourne, Sydney, Vladivostok</option>
+              <option value="11">(GMT +11:00) Magadan, New Caledonia, Solomon Islands</option>
+              <option value="12">(GMT +12:00) Auckland, Wellington, Fiji, Marshall Island</option>
+            </select></td>
+          <td class="vatop tips"><span class="vatop rowform">${message("set_sys_use_time_zone")}+8</span></td>
+        </tr>              
+        <tr>
+          <td colspan="2" class="required">${message("site_state")}:</td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform onoff"><label for="site_status1" class="cb-enable <?php if($output['list_setting']['site_status'] == '1'){ ?>selected<?php } ?>" ><span>${message("open")}</span></label>
+            <label for="site_status0" class="cb-disable <?php if($output['list_setting']['site_status'] == '0'){ ?>selected<?php } ?>" ><span>${message("close")}</span></label>
+            <input id="site_status1" name="site_status" <?php if($output['list_setting']['site_status'] == '1'){ ?>checked="checked"<?php } ?>  value="1" type="radio">
+            <input id="site_status0" name="site_status" <?php if($output['list_setting']['site_status'] == '0'){ ?>checked="checked"<?php } ?> value="0" type="radio"></td>
+          <td class="vatop tips"><span class="vatop rowform">${message("site_state_notice")}</span></td>
+        </tr>
+        <tr>
+          <td colspan="2" class="required"><label for="closed_reason">${message("closed_reason")}:</label></td>
+        </tr>
+        <tr class="noborder">
+          <td class="vatop rowform"><textarea name="closed_reason" rows="6" class="tarea" id="closed_reason" ><?php echo $output['list_setting']['closed_reason'];?></textarea></td>
+          <td class="vatop tips"><span class="vatop rowform">${message("closed_reason_notice")}</span></td>
+        </tr>
+      </tbody>
+      <tfoot id="submit-holder">
+        <tr class="tfoot">
+          <td colspan="2" ><a href="JavaScript:void(0);" class="btn" onclick="document.form1.submit()"><span>${message("nc_submit")}</span></a></td>
+        </tr>
+      </tfoot>
+    </table>
+  </form>
+</div>
+<script type="text/javascript">
+// 模拟网站LOGO上传input type='file'样式
+$(function(){
+	$("#site_logo").change(function(){
+		$("#textfield1").val($(this).val());
+	});
+	//zmr>v30
+	$("#site_mobile_logo").change(function(){
+		$("#textfield8").val($(this).val());
+	});
+	$("#member_logo").change(function(){
+		$("#textfield2").val($(this).val());
+	});
+	$("#seller_center_logo").change(function(){
+		$("#textfield3").val($(this).val());
+	});
+	$("#site_logowx").change(function(){
+		$("#textfield5").val($(this).val());
+	});
+// 上传图片类型
+$('input[class="type-file-file"]').change(function(){
+	var filepatd=$(this).val();
+	var extStart=filepatd.lastIndexOf(".");
+	var ext=filepatd.substring(extStart,filepatd.lengtd).toUpperCase();		
+		if(ext!=".PNG"&&ext!=".GIF"&&ext!=".JPG"&&ext!=".JPEG"){
+			alert("${message("default_img_wrong")}");
+				$(this).attr('value','');
+			return false;
+		}
+	});
+$('#time_zone').attr('value','<?php echo $output['list_setting']['time_zone'];?>');	
+});
+</script>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 </body>
 </html>
 [/#escape]
