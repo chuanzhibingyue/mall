@@ -26,7 +26,7 @@ MICROSHOP_SITE_URL ='${base}/micshop';
 CIRCLE_SITE_URL = '${base}/circle';
 ADMIN_TEMPLATES_URL ='${base}/resources/admin/';
 LOADING_IMAGE = "${base}/resources/admin/images/loading.gif";
-//换肤
+//换肤111
 cookie_skin = $.cookie("MyCssSkin");
 if (cookie_skin) {
 	$('#cssfile2').attr("href","${base}/resources/admin/css/"+ cookie_skin +".css");
